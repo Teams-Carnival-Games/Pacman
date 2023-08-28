@@ -134,9 +134,11 @@ useEffect(() => {
 useEffect(() => {
   const handleUpdateReactWithHealthData = async (healthDataJson) => {
     console.log("Received health data from Unity: ", healthDataJson);
-
     const healthData = JSON.parse(healthDataJson);
     await PacmanService.updateHealthDataFromUnity(healthData);
+
+    console.log("being sent to unity from fluid!:", healthDataJson);
+    sendMessage("Dataexporter", "ReceiveHealthData", healthDataJson);
   };
   
   addEventListener("UpdateHealthData", handleUpdateReactWithHealthData);
@@ -232,20 +234,19 @@ const triggerDownload = (jsonData) => {
                     sendMessage("ScoreManager", "NewDataReceivedFromReact", JSON.stringify(wrappedScores));
                 }
 
-            // Fetch initial health data
-            const initialHealthData = await PacmanService.getHealthData();
-            setHealthData(initialHealthData);
+                // Fetch initial health data
+                const initialHealthData = await PacmanService.getHealthData();
+                setHealthData(initialHealthData);
 
-            // Extract the inner health data object
-            const innerHealthData = initialHealthData[0]?.data;
-            if (innerHealthData) {
-                // Send the inner health data object to Unity as a string
+                // Check if Unity is loaded
                 if (isLoaded) {
-                    const healthDataJson = JSON.stringify(innerHealthData);
-                    console.log("being sent to unity from fluid!:", healthDataJson);
-                    sendMessage("Dataexporter", "ReceiveHealthData", healthDataJson);
+                    // Loop through each data item and send to Unity
+                    for (let healthItem of initialHealthData) {
+                        const healthDataJson = JSON.stringify(healthItem);
+                        console.log("being sent to unity from fluid!:", healthDataJson);
+                        sendMessage("Dataexporter", "ReceiveHealthData", healthDataJson);
+                    }
                 }
-            }
 
             } else {
                 console.log('Fluid has no content');
